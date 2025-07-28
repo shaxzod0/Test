@@ -69,7 +69,11 @@ class MapViewModel: NSObject {
     
     private func startLocationUpdates() {
         guard CLLocationManager.locationServicesEnabled() else { return }
-        locationManager.startUpdatingLocation()
+        guard locationManager.authorizationStatus == .authorizedWhenInUse || locationManager.authorizationStatus == .authorizedAlways else { return }
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.locationManager.startUpdatingLocation()
+        }
     }
     
     private func moveMapToUserLocation(_ location: CLLocation) {
@@ -78,58 +82,24 @@ class MapViewModel: NSObject {
         let point = YMKPoint(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
         let cameraPosition = YMKCameraPosition(target: point, zoom: 16, azimuth: 0, tilt: 0)
         
-        // Move map to user location
         mapView.mapWindow.map.move(
             with: cameraPosition,
             animationType: YMKAnimation(type: YMKAnimationType.smooth, duration: 1.0),
             cameraCallback: nil
         )
         
-        // Add or update user location marker
         showUserLocationMarker(at: point)
     }
     
     private func showUserLocationMarker(at point: YMKPoint) {
         guard let mapView = mapView else { return }
-        
-        // Remove existing user location marker if it exists
         if let existingMarker = userLocationPlacemark {
             mapView.mapWindow.map.mapObjects.remove(with: existingMarker)
         }
-        
-        // Create new user location marker
         userLocationPlacemark = mapView.mapWindow.map.mapObjects.addPlacemark(with: point)
-        
-        // Set custom user location icon
-        if let userLocationIcon = createUserLocationIcon() {
-            userLocationPlacemark?.setIconWith(userLocationIcon)
-        }
-        
-        // Set marker properties
+        userLocationPlacemark?.setIconWith(.icLocate)
         userLocationPlacemark?.opacity = 1.0
         userLocationPlacemark?.isDraggable = false
-    }
-    
-    private func createUserLocationIcon() -> UIImage? {
-        // Create a custom user location icon (blue dot with white border)
-        let size = CGSize(width: 20, height: 20)
-        UIGraphicsBeginImageContextWithOptions(size, false, 0)
-        
-        guard let context = UIGraphicsGetCurrentContext() else { return nil }
-        
-        context.setFillColor(UIColor.white.cgColor)
-        context.fillEllipse(in: CGRect(origin: .zero, size: size))
-        
-        let innerSize = CGSize(width: 14, height: 14)
-        let innerOrigin = CGPoint(x: (size.width - innerSize.width) / 2,
-                                 y: (size.height - innerSize.height) / 2)
-        context.setFillColor(UIColor.systemBlue.cgColor)
-        context.fillEllipse(in: CGRect(origin: innerOrigin, size: innerSize))
-        
-        let image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        return image
     }
     
     private func showLocationPermissionAlert() {
@@ -138,6 +108,30 @@ class MapViewModel: NSObject {
     
     func showPlaceDetails(_ place: SearchResult) {
         actions.showPlaceDetails(place)
+    }
+    
+    func moveMapToLocation(_ searchResult: SearchResult) {
+        guard let mapView = mapView else { return }
+        
+        let point = YMKPoint(latitude: searchResult.latitude, longitude: searchResult.longitude)
+        let cameraPosition = YMKCameraPosition(target: point, zoom: 16, azimuth: 0, tilt: 0)
+        mapView.mapWindow.map.move(
+            with: cameraPosition,
+            animationType: YMKAnimation(type: YMKAnimationType.smooth, duration: 1.0),
+            cameraCallback: nil
+        )
+        showLocationMarker(at: point, for: searchResult)
+    }
+    
+    private func showLocationMarker(at point: YMKPoint, for searchResult: SearchResult) {
+        guard let mapView = mapView else { return }
+        
+        // Create marker for the selected location
+        let placemark = mapView.mapWindow.map.mapObjects.addPlacemark(with: point)
+        placemark.setIconWith(.icPlacement)
+        placemark.opacity = 1.0
+        placemark.isDraggable = false
+        
     }
 }
 

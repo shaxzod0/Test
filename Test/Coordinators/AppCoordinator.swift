@@ -36,6 +36,7 @@ class MainTabBarCoordinator: Coordinator {
     private let tabBarController = UITabBarController()
     
     private let favoritesService: FavoritesServiceProtocol
+    private var mapCoordinator: MapCoordinator?
     
     init(
         navigationController: UINavigationController,
@@ -53,6 +54,7 @@ class MainTabBarCoordinator: Coordinator {
     private func setupTabBar() {
         let favoritesNavController = UINavigationController()
         let favoritesCoordinator = FavoritesCoordinator(navigationController: favoritesNavController)
+        favoritesCoordinator.delegate = self
         addChildCoordinator(favoritesCoordinator)
         favoritesCoordinator.start()
         favoritesNavController.tabBarItem = UITabBarItem(
@@ -61,8 +63,10 @@ class MainTabBarCoordinator: Coordinator {
             selectedImage: .icBookmark
         )
         favoritesNavController.tabBarItem.imageInsets = UIEdgeInsets(top: 6, left: 0, bottom: -6, right: 0)
+        
         let mapNavController = UINavigationController()
         let mapCoordinator = MapCoordinator(navigationController: mapNavController, favoritesService: favoritesService)
+        self.mapCoordinator = mapCoordinator
         addChildCoordinator(mapCoordinator)
         mapCoordinator.start()
         mapNavController.tabBarItem = UITabBarItem(
@@ -71,6 +75,7 @@ class MainTabBarCoordinator: Coordinator {
             selectedImage: .icLocation
         )
         mapNavController.tabBarItem.imageInsets = UIEdgeInsets(top: 6, left: 0, bottom: -6, right: 0)
+        
         let profileNavController = UINavigationController()
         let profileCoordinator = ProfileCoordinator(navigationController: profileNavController)
         addChildCoordinator(profileCoordinator)
@@ -95,5 +100,13 @@ class MainTabBarCoordinator: Coordinator {
         tabBarController.tabBar.layer.cornerRadius = 12
         tabBarController.tabBar.layer.masksToBounds = true
         tabBarController.tabBar.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+    }
+}
+
+// MARK: - FavoritesCoordinatorDelegate
+extension MainTabBarCoordinator: FavoritesCoordinatorDelegate {
+    func navigateToMap(with searchResult: SearchResult) {
+        tabBarController.selectedIndex = 1
+        mapCoordinator?.moveToLocation(searchResult)
     }
 }

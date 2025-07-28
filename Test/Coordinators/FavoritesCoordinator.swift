@@ -7,9 +7,15 @@
 
 import UIKit
 
+protocol FavoritesCoordinatorDelegate: AnyObject {
+    func navigateToMap(with searchResult: SearchResult)
+}
+
 class FavoritesCoordinator: Coordinator {
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
+    
+    weak var delegate: FavoritesCoordinatorDelegate?
     
     private let favoritesService: FavoritesServiceProtocol
     
@@ -22,7 +28,11 @@ class FavoritesCoordinator: Coordinator {
     }
     
     func start() {
-        let actions = BookmarksViewModelActions()
+        let actions = BookmarksViewModelActions(
+            onBookmarkSelected: { [weak self] bookmark in
+                self?.delegate?.navigateToMap(with: bookmark)
+            }
+        )
         let viewModel = BookmarksViewModel(favoritesService: favoritesService, actions: actions)
         let bookmarksViewController = BookmarksController.create(with: viewModel)
         bookmarksViewController.title = "Мои адреса"

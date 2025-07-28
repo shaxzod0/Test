@@ -18,7 +18,8 @@ class MapCoordinator: Coordinator {
     
     private lazy var placeDetailsRepository = PlaceDetailsRepository(favoriteService: favoritesService)
     private lazy var mapRepository: any MapRepositoryProtocol = MapRepository()
-        
+    
+    private var mapViewModel: MapViewModel?
     
     init(
         navigationController: UINavigationController,
@@ -33,8 +34,13 @@ class MapCoordinator: Coordinator {
             showPlaceDetails: showPlaceDetails(_:)
         )
         let viewModel = MapViewModel(repository: mapRepository, actions: actions)
+        self.mapViewModel = viewModel
         let mapViewController = MapController.create(with: viewModel)
         navigationController.pushViewController(mapViewController, animated: false)
+    }
+    
+    func moveToLocation(_ searchResult: SearchResult) {
+        mapViewModel?.moveMapToLocation(searchResult)
     }
     
     func showPlaceDetails(_ place: SearchResult) {
@@ -46,9 +52,5 @@ class MapCoordinator: Coordinator {
         )
         let placeDetailsViewController = PlaceDetailsController.create(with: viewModel)
         navigationController.presentPanModal(placeDetailsViewController)
-    }
-    
-    func showDetails(_ place: SearchResult) {
-        
     }
 }

@@ -75,4 +75,9 @@ extension BookmarksRootView: UITableViewDataSource, UITableViewDelegate {
         cell.configure(with: bookmark)
         return cell
     }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        viewModel.selectBookmark(at: indexPath.row)
+    }
 }

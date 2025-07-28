@@ -9,7 +9,7 @@ import UIKit
 import Foundation
 
 struct BookmarksViewModelActions {
-    
+    let onBookmarkSelected: (SearchResult) -> Void
 }
 
 class BookmarksViewModel: DefaultViewModel {
@@ -37,5 +37,11 @@ class BookmarksViewModel: DefaultViewModel {
             guard let self else { return }
             bookmarks.value = favoritesService.getFavorites()
         }
+    }
+    
+    func selectBookmark(at index: Int) {
+        guard index >= 0 && index < bookmarks.value.count else { return }
+        let selectedBookmark = bookmarks.value[index]
+        actions.onBookmarkSelected(selectedBookmark)
     }
 }
